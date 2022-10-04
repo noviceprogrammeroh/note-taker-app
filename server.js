@@ -31,18 +31,18 @@ fs.readFile(db, "utf8", (err, data) => {
   }
 });
 
+// GET should return the `index.html` file.
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/index.html'));
+    console.log(res.status(200));
+  });
+
 //notes should return the notes.html file.
 app.get("/notes", (req, res) => {
   res.sendFile(path.join(__dirname, '../public/notes.html'));
   console.log(res.status(200));
 });
 
-
-// GET should return the `index.html` file.
-app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/index.html'));
-    console.log(res.status(200));
-  });
 
 
 // GET /api/notes` should read the `db.json` file and return all saved notes as JSON.
