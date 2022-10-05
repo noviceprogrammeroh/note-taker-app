@@ -1,18 +1,21 @@
 //import libraries
-const express = require("express");
+const express = require('express');
 const path = require("path");
 const { v4: uuidv4 } = require("uuid");
 const fs = require("fs");
-const api = require("./public/assets/js/index.js");
+
 const db = require("./db/db.json");
 
 //set your server port
 const PORT = process.env.PORT || 3001;
 
+//shortcut to access the express() method
 const app = express();
 
 // Sets up the Express app to handle data parsing
 app.use(express.urlencoded({ extended: true }));
+
+//it uses JSON formatting
 app.use(express.json());
 
 // Add a static middleware for serving assets in the public folder
@@ -20,7 +23,7 @@ app.use(express.static("public"));
 
 //On the back end, the application should include a `db.json`
 // file that will be used to store and retrieve notes using the `fs` module.
-fs.readFile(db, "utf8", (err, data) => {
+fs.readFile("./db/db.json", "utf8", (err, data) => {
   if (err) {
     console.error(err);
   } else {
@@ -56,17 +59,31 @@ app.get("/notes", (req, res) => {
  //it's saved (look into npm packages that could do this for you).
 
  app.post("/api/notes", (req, res) => {
-    fs.writeFile(
-        db,
-        JSON.stringify(parsedNotes, null, 4),
-        (writeErr) =>
-          writeErr
-            ? console.error(writeErr)
-            : console.info('Successfully updated db.json!')
+    const newNote = createNote(req.body, dataBase);
+    res.json(newNote);
+    
+ });
 
-      );
 
-  });
+ //create a function
+ const createNote = (body, notesArray) => {
+    const newNote = body;
+    if (!Array.isArray(notesArray))
+        notesArray = [];
+    if (notesArray.length === 0)
+        notesArray.push(0);
+
+    body.id = notesArray.length;
+    notesArray[0]++;
+    notesArray.push(newNote);
+
+    fs.writeFileSync(
+        path.join(__dirname, "./db/db.json"),
+        JSON.stringify(notesArray, null, 2)
+    );
+    return newNote;
+};
+
 
   
   //listening port
