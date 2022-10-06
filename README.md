@@ -15,8 +15,6 @@ The Note Taker application allows the user to write and saves notes.
 ![This is an image](./images/employees_screenshot.JPG)
 
 
-
-
 ## Links ##
 
 - GitHub Repository

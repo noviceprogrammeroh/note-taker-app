@@ -1,9 +1,10 @@
 //import libraries
-const express = require('express');
+const express = require("express");
 const path = require("path");
 const { v4: uuidv4 } = require("uuid");
 const fs = require("fs");
 
+//access the database json file
 const db = require("./db/db.json");
 
 //set your server port
@@ -12,82 +13,70 @@ const PORT = process.env.PORT || 3001;
 //shortcut to access the express() method
 const app = express();
 
+//it uses JSON formatting
+app.use(express.json());
 // Sets up the Express app to handle data parsing
 app.use(express.urlencoded({ extended: true }));
 
-//it uses JSON formatting
-app.use(express.json());
-
 // Add a static middleware for serving assets in the public folder
 app.use(express.static("public"));
-
-//On the back end, the application should include a `db.json`
-// file that will be used to store and retrieve notes using the `fs` module.
-fs.readFile("./db/db.json", "utf8", (err, data) => {
-  if (err) {
-    console.error(err);
-  } else {
-    // Convert string into JSON object
-    const parsedNotes = JSON.parse(data);
-
-    // parsedNotes.push();
-  }
-});
+// app.use(express.static(path.join(__dirname,"./public")));
 
 // GET should return the `index.html` file.
 app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/index.html'));
-    console.log(res.status(200));
-  });
-
-//notes should return the notes.html file.
-app.get("/notes", (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/notes.html'));
+  res.sendFile(path.join(__dirname, "./public/index.html"));
   console.log(res.status(200));
 });
 
+//notes should return the notes.html file.
+app.get("/notes", (req, res) => {
+  res.sendFile(path.join(__dirname, "./public/notes.html"));
+});
 
-
+//notes should return the notes.html file API
 // GET /api/notes` should read the `db.json` file and return all saved notes as JSON.
- app.get('/api/notes', (req, res) => {
-    // Send a message to the client
-    res.status(200).json(`${req.method} request received to get reviews`);
-  
- //POST /api/notes` should receive a new note to save on the request body,
- // add it to the `db.json` file, and then return the new note to the client. 
- //You'll need to find a way to give each note a unique id when 
- //it's saved (look into npm packages that could do this for you).
+app.get("/api/notes", (req, res) => {
+  // res.json(db.slice(1));
+  res.sendFile(path.join(__dirname, "./db/db.json"));
+});
 
- app.post("/api/notes", (req, res) => {
-    const newNote = createNote(req.body, dataBase);
-    res.json(newNote);
-    
- });
+//POST /api/notes` should receive a new note to save on the request body,
+// add it to the `db.json` file, and then return the new note to the client.
+//You'll need to find a way to give each note a unique id when
+//it's saved (look into npm packages that could do this for you).
 
+app.post("/api/notes", (req, res) => {
+  fs.readFile("./db/db.json", "utf8", (err, data) => {
+    if (err) throw err;
+    let notes = JSON.parse(data);
+    let userNote = req.body;
+    //generate a random unique id
+    userNote.id = uuidv4();
+    notes.push(userNote);
+    fs.writeFile("./db/db.json", JSON.stringify(notes), (err, data) => {
+      console.log(notes);
+      res.json(userNote);
+    });
+  });
+});
 
- //create a function
- const createNote = (body, notesArray) => {
-    const newNote = body;
-    if (!Array.isArray(notesArray))
-        notesArray = [];
-    if (notesArray.length === 0)
-        notesArray.push(0);
-
-    body.id = notesArray.length;
-    notesArray[0]++;
-    notesArray.push(newNote);
-
-    fs.writeFileSync(
-        path.join(__dirname, "./db/db.json"),
-        JSON.stringify(notesArray, null, 2)
+//delete note
+app.delete("/api/notes/:id", (req, res) => {
+  fs.readFile("./db/db.json", "utf8", (err, data) => {
+    if (err) throw err;
+    let notes = JSON.parse(data);
+    const newNotes = notes.filter(
+      (note) => note.id !== parseInt(req.params.id)
     );
-    return newNote;
-};
 
+    fs.writeFile("./db/db.json", JSON.stringify(newNotes), (err, data) => {
+      if (err) throw err;
+      if (res.json(data)) console.log("Successfully Deleted");
+    });
+  });
+});
 
-  
-  //listening port
-app.listen(PORT, () =>
-console.log(`Example app listening at http://localhost:${PORT}`)
-);
+//listening port
+app.listen(PORT, () => {
+  console.log(`Example app listening at http://localhost:${PORT}`);
 });
