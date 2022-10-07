@@ -24,20 +24,20 @@ app.use(express.static("public"));
 
 // GET should return the `index.html` file.
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "./public/index.html"));
-  console.log(res.status(200));
+    res.sendFile(path.join(__dirname, "./public/index.html"));
+    console.log(res.status(200));
 });
 
 //notes should return the notes.html file.
 app.get("/notes", (req, res) => {
-  res.sendFile(path.join(__dirname, "./public/notes.html"));
+    res.sendFile(path.join(__dirname, "./public/notes.html"));
 });
 
 //notes should return the notes.html file API
 // GET /api/notes` should read the `db.json` file and return all saved notes as JSON.
 app.get("/api/notes", (req, res) => {
-  // res.json(db.slice(1));
-  res.sendFile(path.join(__dirname, "./db/db.json"));
+    // res.json(db.slice(1));
+    res.sendFile(path.join(__dirname, "./db/db.json"));
 });
 
 //POST /api/notes` should receive a new note to save on the request body,
@@ -46,37 +46,41 @@ app.get("/api/notes", (req, res) => {
 //it's saved (look into npm packages that could do this for you).
 
 app.post("/api/notes", (req, res) => {
-  fs.readFile("./db/db.json", "utf8", (err, data) => {
-    if (err) throw err;
-    let notes = JSON.parse(data);
-    let userNote = req.body;
-    //generate a random unique id
-    userNote.id = uuidv4();
-    notes.push(userNote);
-    fs.writeFile("./db/db.json", JSON.stringify(notes), (err, data) => {
-      console.log(notes);
-      res.json(userNote);
+    fs.readFile("./db/db.json", "utf8", (err, data) => {
+        if (err) throw err;
+        let notes = JSON.parse(data);
+        let userNote = req.body;
+        //generate a random unique id
+        userNote.id = uuidv4();
+        notes.push(userNote);
+        fs.writeFile("./db/db.json", JSON.stringify(notes), (err, data) => {
+            console.log(notes);
+            res.json(userNote);
+        });
     });
-  });
 });
 
 //delete note
-app.delete("/api/notes/:id", (req, res) => {
-  fs.readFile("./db/db.json", "utf8", (err, data) => {
-    if (err) throw err;
-    let notes = JSON.parse(data);
-    const newNotes = notes.filter(
-      (note) => note.id !== parseInt(req.params.id)
-    );
+  
+app.delete("/api/notes/:id", function(req, res) {
+    let notesStored = JSON.parse(fs.readFileSync("./db/db.json", "utf8"));
+    let noteID = req.params.id;
+    let newIDCount = 0;
+    notesStored = notesStored.filter(currentNote => {
+        return currentNote.id != noteID;
+    })
+    
+    for (let currentNote of notesStored) {
+        currentNote.id = newIDCount.toString();
+        newIDCount++;
+    }
 
-    fs.writeFile("./db/db.json", JSON.stringify(newNotes), (err, data) => {
-      if (err) throw err;
-      if (res.json(data)) console.log("Successfully Deleted");
+    fs.writeFileSync("./db/db.json", JSON.stringify(notesStored));
+    res.json(notesStored);
+    console.log("Note deleted!")
+})
+
+    //listening port
+    app.listen(PORT, () => {
+        console.log(`Example app listening at http://localhost:${PORT}`);
     });
-  });
-});
-
-//listening port
-app.listen(PORT, () => {
-  console.log(`Example app listening at http://localhost:${PORT}`);
-});
